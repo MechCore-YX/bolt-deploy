@@ -1,6 +1,6 @@
 import streamlit as st
+import cv2
 import numpy as np
-from PIL import Image
 from ultralytics import YOLO
 
 st.set_page_config(page_title="螺栓缺陷AI检测", layout="centered")
@@ -16,17 +16,9 @@ model = load_model()
 uploaded_file = st.file_uploader("点击上传图片", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # 使用 PIL 读取图片
-    image = Image.open(uploaded_file)
-    # 转换为 RGB（确保格式）
-    if image.mode != 'RGB':
-        image = image.convert('RGB')
-    # 转为 numpy 数组（ultralytics 可以接受 PIL 图像，但直接传 numpy 更通用）
-    img_array = np.array(image)
-    # 检测
-    results = model(img_array, conf=0.25)
-    annotated = results[0].plot()  # 返回 BGR 格式的 numpy 数组
-    # 显示结果（streamlit 需要 RGB）
+    img = cv2.imdecode(np.frombuffer(uploaded_file.read(), np.uint8), cv2.IMREAD_COLOR)
+    results = model(img, conf=0.25)
+    annotated = results[0].plot()
     st.image(annotated, channels="BGR", caption="检测结果")
     if len(results[0].boxes) > 0:
         st.success(f"检测到 {len(results[0].boxes)} 个目标")
